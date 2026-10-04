@@ -27,20 +27,38 @@ The script downloads the data on first run and saves a local copy to `data/insur
    - Numeric features: median imputation + `StandardScaler`
    - Categorical features: most-frequent imputation + `OneHotEncoder`
 3. **Train/test split** — 80/20 (1,070 train / 268 test), `random_state=42`.
-4. **Models compared:**
+4. **Models compared** (see the comparison table below):
    - Linear Regression (baseline)
+   - Decision Tree
    - Random Forest (300 trees)
    - Gradient Boosting
+   - K-Nearest Neighbors (k=5, distance-based — uses the scaled features from the pipeline)
 5. **Evaluation** on the held-out test set: RMSE, MAE, R².
-6. **Outputs** — `outputs/metrics.json`, charges distribution chart, actual-vs-predicted chart for the best model, and a feature-importance chart.
+6. **Outputs** — `outputs/metrics.json`, charges distribution chart, actual-vs-predicted chart for the best model, a feature-importance chart, and a model-comparison RMSE chart.
+
+## Machine Learning Algorithms Compared
+
+Five regression algorithms were trained on the same pipeline and evaluated on the same held-out test set (268 people):
+
+| Algorithm | RMSE ($) | MAE ($) | R² |
+|---|---|---|---|
+| Linear Regression | 5,796.28 | 4,181.19 | 0.7836 |
+| Decision Tree | 6,668.08 | 3,227.66 | 0.7136 |
+| Random Forest | 4,611.37 | 2,525.80 | 0.8630 |
+| **Gradient Boosting** | **4,324.57** | **2,400.76** | **0.8795** |
+| K-Nearest Neighbors | 5,998.69 | 3,631.59 | 0.7682 |
+
+**How to read this:** Linear Regression assumes a straight-line relationship, so it misses the sharp smoker/non-smoker split. A single Decision Tree captures non-linear patterns but is unstable on its own (highest RMSE here). Random Forest (averaging 300 trees) and Gradient Boosting (building trees one at a time, each correcting the previous trees' errors) are the strongest tree ensembles, and Gradient Boosting wins. K-Nearest Neighbors finds the 5 most similar people (by scaled age/BMI/children and encoded features) and averages their charges; it is simple but sensitive to which features dominate the distance, so it lands close to the linear baseline here.
 
 ## Results (actual run)
 
 | Model | RMSE ($) | MAE ($) | R² |
 |---|---|---|---|
 | Linear Regression | 5,796.28 | 4,181.19 | 0.7836 |
+| Decision Tree | 6,668.08 | 3,227.66 | 0.7136 |
 | Random Forest | 4,611.37 | 2,525.80 | 0.8630 |
 | **Gradient Boosting** | **4,324.57** | **2,400.76** | **0.8795** |
+| K-Nearest Neighbors | 5,998.69 | 3,631.59 | 0.7682 |
 
 Gradient Boosting is the best model: it explains about **88% of the variance** in charges, with a typical error (MAE) of about **$2,401**.
 
@@ -76,6 +94,7 @@ Outputs appear in `outputs/`:
 - `charges_distribution.png`
 - `actual_vs_predicted_gradient_boosting.png`
 - `feature_importance_gradient_boosting.png`
+- `model_comparison_rmse.png`
 
 ## Project structure
 
@@ -89,14 +108,15 @@ insurance-cost-prediction/
 │   ├── metrics.json
 │   ├── charges_distribution.png
 │   ├── actual_vs_predicted_gradient_boosting.png
-│   └── feature_importance_gradient_boosting.png
+│   ├── feature_importance_gradient_boosting.png
+│   └── model_comparison_rmse.png
 ├── README.md
 └── WALKTHROUGH_FA.md           # step-by-step explanation in Persian
 ```
 
 ## Skills used
 
-Python, pandas, scikit-learn (pipelines, OneHotEncoder, StandardScaler, Linear Regression, Random Forest, Gradient Boosting, RMSE/MAE/R²), matplotlib, regression modeling, exploratory data analysis, feature importance interpretation.
+Python, pandas, scikit-learn (pipelines, OneHotEncoder, StandardScaler, Linear Regression, Decision Tree, Random Forest, Gradient Boosting, K-Nearest Neighbors, RMSE/MAE/R²), matplotlib, regression modeling, model comparison, exploratory data analysis, feature importance interpretation.
 
 ## Ideas to extend
 

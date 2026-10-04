@@ -11,10 +11,12 @@ What this script does, step by step:
   1. Downloads the data (and saves a local copy in data/insurance.csv)
   2. Prints a small exploratory data analysis (EDA) summary
   3. Prepares the data: one-hot encoding for text columns, scaling for numbers
-  4. Trains and compares 3 models:
+  4. Trains and compares 5 models:
        - Linear Regression  (simple baseline)
+       - Decision Tree      (single tree)
        - Random Forest      (tree ensemble)
        - Gradient Boosting  (strong tree ensemble)
+       - K-Nearest Neighbors (distance-based; uses scaled features)
   5. Evaluates each model with RMSE, MAE and R2 on a held-out test set
   6. Saves metrics to outputs/metrics.json and charts to outputs/
 """
@@ -35,8 +37,10 @@ from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.tree import DecisionTreeRegressor
 
 # ---------------------------------------------------------------------------
 # Paths and constants
@@ -111,6 +115,23 @@ def save_actual_vs_predicted(y_true, y_pred, model_name: str) -> Path:
     ax.legend()
     fig.tight_layout()
     path = OUTPUT_DIR / f"actual_vs_predicted_{model_name.replace(' ', '_').lower()}.png"
+    fig.savefig(path, dpi=150)
+    plt.close(fig)
+    return path
+
+
+def save_model_comparison(results: dict) -> Path:
+    ordered = sorted(results.items(), key=lambda kv: kv[1]["rmse"])
+    names = [name for name, _ in ordered]
+    rmses = [metrics["rmse"] for _, metrics in ordered]
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.barh(names[::-1], rmses[::-1], color="#4C72B0")
+    ax.set_xlabel("RMSE on test set (USD) — lower is better")
+    ax.set_title("Model comparison — RMSE by algorithm")
+    for i, value in enumerate(rmses[::-1]):
+        ax.text(value, i, f" {value:,.0f}", va="center")
+    fig.tight_layout()
+    path = OUTPUT_DIR / "model_comparison_rmse.png"
     fig.savefig(path, dpi=150)
     plt.close(fig)
     return path
@@ -201,8 +222,12 @@ def main() -> None:
 
     models = {
         "Linear Regression": LinearRegression(),
+        "Decision Tree": DecisionTreeRegressor(random_state=RANDOM_STATE),
         "Random Forest": RandomForestRegressor(n_estimators=300, random_state=RANDOM_STATE, n_jobs=-1),
         "Gradient Boosting": GradientBoostingRegressor(random_state=RANDOM_STATE),
+        # KNN is distance-based, so it relies on the StandardScaler in the
+        # preprocessing pipeline to put features on a comparable scale.
+        "K-Nearest Neighbors": KNeighborsRegressor(n_neighbors=5),
     }
 
     results = {}
@@ -228,6 +253,9 @@ def main() -> None:
     if importance_chart is not None:
         chart_paths.append(importance_chart)
         print(f"Saved chart: {importance_chart.name}")
+
+    chart_paths.append(save_model_comparison(results))
+    print(f"Saved chart: {chart_paths[-1].name}")
 
     metrics_path = OUTPUT_DIR / "metrics.json"
     with open(metrics_path, "w", encoding="utf-8") as f:
