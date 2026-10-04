@@ -1,0 +1,24 @@
+{
+  "dataset_rows": 1338,
+  "train_rows": 1070,
+  "test_rows": 268,
+  "random_state": 42,
+  "best_model": "Gradient Boosting",
+  "models": {
+    "Linear Regression": {
+      "rmse": 5796.28,
+      "mae": 4181.19,
+      "r2": 0.7836
+    },
+    "Random Forest": {
+      "rmse": 4611.37,
+      "mae": 2525.8,
+      "r2": 0.863
+    },
+    "Gradient Boosting": {
+      "rmse": 4324.57,
+      "mae": 2400.76,
+      "r2": 0.8795
+    }
+  }
+}
